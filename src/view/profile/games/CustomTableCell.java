@@ -29,8 +29,7 @@ public class CustomTableCell extends DefaultTableCellRenderer {
                 default -> null;
             });
 
-        } else if (column == 4 && value instanceof Date) {
-            Date dateValue = (Date) value;
+        } else if (column == 4 && value instanceof Date dateValue) {
             setText(new SimpleDateFormat().format(dateValue)); // Format date using SimpleDateFormat
             setIcon(null); // Clear icon for date column
 

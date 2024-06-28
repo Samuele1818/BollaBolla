@@ -26,7 +26,7 @@ public class Text extends JLabel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if(avoidRepaint) return;
+        if (avoidRepaint) return;
 
         setForeground(UIManager.getColor("Label.foreground"));
     }

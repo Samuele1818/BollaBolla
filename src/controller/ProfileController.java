@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.Calendar;
 import java.util.Date;
 
 public class ProfileController implements ActionListener {
@@ -103,7 +104,7 @@ public class ProfileController implements ActionListener {
 
                 String filePath = profileCenter.getUserPanel().getUserTextField().getText();
                 //test
-                model.getPlayer().getRegister().insertGame(new Game(Monster.Type.BUB, true, (int) (Math.random() * 10000), 3, new Date(2020, 11, 30)));
+                model.getPlayer().getRegister().insertGame(new Game(Monster.Type.BUB, true, (int) (Math.random() * 10000), 3, new Date(2020, Calendar.DECEMBER, 30)));
                 // Save current player data
                 model.getPlayer().save();
                 // Load new player and change it

@@ -49,8 +49,7 @@ public class GameRecordsPanel extends JPanel implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof ArrayList<?>) {
-            ArrayList<?> arrayList = (ArrayList<?>) arg;
+        if (arg instanceof ArrayList<?> arrayList) {
 
             if (arrayList.isEmpty()) {
                 model.setGames(new ArrayList<>());

@@ -28,7 +28,7 @@ public abstract class Entity implements Serializable {
         changeCharacterType(type);
     }
 
-    public Entity(int x, int y, int width, int height, Type type, String skinPath,Level.Direction currentDirection) {
+    public Entity(int x, int y, int width, int height, Type type, String skinPath, Level.Direction currentDirection) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -105,9 +105,6 @@ public abstract class Entity implements Serializable {
     public String getCharacterPath() {
         return skinPath;
     }
-
-
-
 
 
     public enum Type implements Serializable {

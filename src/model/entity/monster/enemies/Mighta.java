@@ -9,9 +9,10 @@ public class Mighta extends Enemies implements Fly {
     public Mighta(int x, int y) {
         super(x, y, Type.MIGHTA);
     }
-    public Mighta(int x, int y,String path, Level.Direction direction) {
 
-        super(x, y, Type.MIGHTA,1,path,direction);
+    public Mighta(int x, int y, String path, Level.Direction direction) {
+
+        super(x, y, Type.MIGHTA, 1, path, direction);
     }
 
     @Override

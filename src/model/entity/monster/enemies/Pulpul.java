@@ -18,8 +18,8 @@ public class Pulpul extends Enemies implements Jump {
         possibilityOfJumping = true;
     }
 
-    public Pulpul(int x, int y,String path, Level.Direction direction) {
-        super(x, y, Type.PULPUL,1,path,direction);
+    public Pulpul(int x, int y, String path, Level.Direction direction) {
+        super(x, y, Type.PULPUL, 1, path, direction);
         isJump = false;
         sizeJump = 50;
         possibilityOfJumping = true;

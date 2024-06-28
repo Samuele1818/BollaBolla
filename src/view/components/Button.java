@@ -4,12 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Button extends JButton {
-    private String text;
-    private Color bgcolor;
-    private int width;
-    private int height;
+    private final String text;
+    private final Color bgcolor;
+    private final int width;
+    private final int height;
+    private final boolean avoidRepaint;
     private Image customIcon;
-    private boolean avoidRepaint;
 
     private Button(ButtonBuilder buttonBuilder) {
         this.text = buttonBuilder.text;

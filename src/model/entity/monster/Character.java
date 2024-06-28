@@ -15,8 +15,7 @@ import java.util.Set;
 
 public class Character extends Monster implements Jump, Fire, Serializable {
     public static final int SPAWN_X = Brick.WIDTH * 4, SPAWN_Y = Brick.HEIGHT * (Level.ROWS - 5), HEALTH = 3;
-
-    private static int default_Jump = 50;
+    private static final int DEFAULT_JUMP = 50;
     private Set<Consumable> powerUp;
     private int Health;
     private int jumpHeight;
@@ -26,7 +25,7 @@ public class Character extends Monster implements Jump, Fire, Serializable {
     public Character(Type type) {
         this(SPAWN_X, SPAWN_Y, HEALTH, type);
         this.Health = HEALTH;
-        this.jumpHeight = default_Jump;
+        this.jumpHeight = DEFAULT_JUMP;
 
     }
 
@@ -37,10 +36,8 @@ public class Character extends Monster implements Jump, Fire, Serializable {
         changeCharacterType(type);
     }
 
-
-
     public void resetHumpHeight() {
-        jumpHeight = default_Jump;
+        jumpHeight = DEFAULT_JUMP;
     }
 
 
@@ -77,30 +74,20 @@ public class Character extends Monster implements Jump, Fire, Serializable {
     public Bubble fire() {
         int bubbleX = 0;
         int bubbleY = 0;
-        switch (getCurrentDirection()) {
-            case LEFT:
+        bubbleX = switch (getCurrentDirection()) {
+            case LEFT -> {
                 bubbleY = getY() + 5;
-                bubbleX = getX() - 24;
-                break;
-            case RIGHT:
+                yield getX() - 24;
+            }
+            case RIGHT -> {
                 bubbleY = getY() + 5;
-                bubbleX = getX() + HEIGHT;
-                break;
-        }
+                yield getX() + HEIGHT;
+            }
+            default -> bubbleX;
+        };
 
         return new NormalBubble(bubbleX, bubbleY, getCurrentDirection());
     }
-
-    @Override
-    public void fall() {
-        this.setY(getY() + 2);
-    }
-
-    @Override
-    public void move(int x) {
-        this.setX(getX() + x);
-    }
-
 
     public Type getType() {
         return type;

@@ -46,12 +46,7 @@ public class MenuController implements ActionListener {
             view.changePanel(View.Screen.PLAY);
             model.getLevel().getMainCharacter().changeCharacterType(model.getPlayer().getMainCharacter());
 
-            Thread thread = new Thread() {
-                @Override
-                public void run() {
-                    GameController.getInstance().GameLoop();
-                }
-            };
+            Thread thread = new Thread(() -> GameController.getInstance().GameLoop());
             thread.start();
 
         }

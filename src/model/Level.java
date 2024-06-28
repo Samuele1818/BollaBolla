@@ -3,7 +3,6 @@ package model;
 import model.entity.Monster;
 import model.entity.monster.Character;
 import model.entity.monster.enemies.Enemies;
-import model.entity.monster.enemies.Monsta;
 import model.entity.monster.enemies.Pulpul;
 import model.entity.monster.enemies.ZenChan;
 import model.entity.objects.Brick;
@@ -29,6 +28,8 @@ public class Level extends Observable implements Serializable {
     @Serial
     private final static long serialVersionUID = 6920834105100098501L;
     private static final String MAP_FOLDER = "level";
+    transient ArrayList<Loot> loots;
+    transient ArrayList<PowerUp> powerUps;
     private Character mainCharacter;
     // Bricks contained by the map
     private ArrayList<Brick> bricks;
@@ -43,8 +44,6 @@ public class Level extends Observable implements Serializable {
     // Level number to load the map
     private int level;
     private int score;
-    transient ArrayList<Loot> loots;
-    transient ArrayList<PowerUp> powerUps;
 
     public Level(String bricksImage, Character.Type mainCharacter) {
         bricks = new ArrayList<>();
@@ -251,7 +250,7 @@ public class Level extends Observable implements Serializable {
         ZENCHAN_BUBBLE("zenchan.gif"), INVADER_BUBBLE("invader.gif"),
         MONSTA_BUBBLE("monsta.gif"), PULPUL_BUBBLE("pulpul.gif"),
         DRUNK_BUBBLE("drunk.gif"), MIGHTA_BUBBLE("bobbub.gif"),
-        BUBBLE("bubble.png"),BUBBLE_END("bubbleend.png"),
+        BUBBLE("bubble.png"), BUBBLE_END("bubbleend.png"),
         DEAD_LEFT("dead_left.gif"), DEAD_RIGHT("dead_right.gif");
         private final String imagesMovements;
 
