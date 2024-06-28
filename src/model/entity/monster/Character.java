@@ -5,31 +5,31 @@ import model.entity.Monster;
 import model.entity.objects.Brick;
 import model.entity.objects.bubble.Bubble;
 import model.entity.objects.bubble.NormalBubble;
-import model.entity.objects.consumable.Consumable;
 import model.sam.Fire;
 import model.sam.Jump;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
-public class Character extends Monster implements Jump, Fire, Serializable {
+public class Character extends Monster implements Jump,Fire,Serializable {
     public static final int SPAWN_X = Brick.WIDTH * 4, SPAWN_Y = Brick.HEIGHT * (Level.ROWS - 5), HEALTH = 3;
 
     private static int default_Jump = 50;
-    private Set<Consumable> powerUp;
     private int Health;
     private int jumpHeight;
     private Type type;
 
 
     private boolean redShoe;
+    private boolean bluCandy;
+    private boolean pinkCandy;
     private boolean yellowCandy;
     public Character(Type type) {
         this(SPAWN_X, SPAWN_Y, HEALTH, type);
         this.Health = HEALTH;
         this.jumpHeight = default_Jump;
         redShoe=false;
+        bluCandy =false;
+        pinkCandy=false;
         yellowCandy=false;
     }
 
@@ -41,18 +41,33 @@ public class Character extends Monster implements Jump, Fire, Serializable {
         this.yellowCandy = yellowCandy;
     }
 
+    public boolean isPinkCandy() {
+        return pinkCandy;
+    }
+
+    public void setPinkCandy(boolean pinkCandy) {
+        this.pinkCandy = pinkCandy;
+    }
+
+    public boolean isBluCandy() {
+        return bluCandy;
+    }
+
+    public void setBluCandy(boolean bluCandy) {
+        this.bluCandy = bluCandy;
+    }
+
     public boolean isRedShoe() {
         return redShoe;
     }
 
-    public void setBluCandy(boolean redShoe) {
+    public void setRedShoe(boolean redShoe) {
         this.redShoe = redShoe;
     }
 
     private Character(int x, int y, int health, Type type) {
         super(x, y, 2, type, "walk_right.gif");
         this.type = type;
-        powerUp = new HashSet<>();
         changeCharacterType(type);
     }
 
@@ -71,13 +86,6 @@ public class Character extends Monster implements Jump, Fire, Serializable {
         Health = health;
     }
 
-    public Set<Consumable> getPowerUp() {
-        return powerUp;
-    }
-
-    public void setPowerUp(Set<Consumable> powerUp) {
-        this.powerUp = powerUp;
-    }
 
     public int getJumpHeight() {
         return jumpHeight;

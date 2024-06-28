@@ -26,12 +26,12 @@ public class PowerUp extends Consumable{
     public enum PowerUpType {
 
 
-        YELLOW_CANDY("yellow_candy.png",100),
-        BLUE_CANDY("blue_candy.png",100),        // saltare 35 volte img messa fatto
-        PURPLE_CANDY("purple_candy.png",100),  //scoppiare 35 bolle img messa
+        YELLOW_CANDY("yellow_candy.png",100),  //implementata
+        BLUE_CANDY("blue_candy.png",100),
+        PINK_CANDY("pink_candy.png",100),      //implementata
         BLU_UMBRELLA("blu_umbrella.png",2000),
-        PINK_UMBRELLA("pink_umbrella.png",2000),   //img messa
-        RED_SHOE("red_shoe.png",100),     //img messa
+        PINK_UMBRELLA("pink_umbrella.png",2000),
+        RED_SHOE("red_shoe.png",100),     //implementata
         BLU_RING("blu_ring.png",3000),
         PURPLE_RING("purple_ring.png",4000),
         RED_RING("red_ring.png",4000),

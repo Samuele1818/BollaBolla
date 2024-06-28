@@ -12,6 +12,7 @@ import model.entity.objects.consumable.Loot;
 import model.entity.objects.consumable.PowerUp;
 import model.files.FileManager;
 import model.play.Player;
+import model.utils.GenerateLevel;
 
 import java.io.File;
 import java.io.Serial;
@@ -27,7 +28,7 @@ public class Level extends Observable implements Serializable {
     public static final int PADDING = 2;
     @Serial
     private final static long serialVersionUID = 6920834105100098501L;
-    private static final String MAP_FOLDER = "level";
+    public static final String LEVEL_FOLDER = "level";
     private Character mainCharacter;
     // Bricks contained by the map
     private ArrayList<Brick> bricks;
@@ -45,6 +46,8 @@ public class Level extends Observable implements Serializable {
     transient ArrayList<Loot> loots;
     transient ArrayList<PowerUp> powerUps;
 
+    transient private GenerateLevel generateLevel;
+
     public Level(String bricksImage, Character.Type mainCharacter) {
         bricks = new ArrayList<>();
         this.bricksImage = bricksImage;
@@ -57,7 +60,11 @@ public class Level extends Observable implements Serializable {
         this.loots = new ArrayList<>();
         powerUps = new ArrayList<>();
         this.score = 0;
+
+        generateLevel = new GenerateLevel(this);
+
         init();
+//        resetLevel(3, 1);
     }
 
     public void init() {
@@ -68,7 +75,7 @@ public class Level extends Observable implements Serializable {
         this.bubbles = new ArrayList<>();
         this.loots = new ArrayList<>();
         this.powerUps = new ArrayList<>();
-        FileManager.createDirectory(MAP_FOLDER);
+        FileManager.createDirectory(LEVEL_FOLDER);
 
         for (int j = PADDING; j < COLUMNS - PADDING; j++) {
 
@@ -84,61 +91,55 @@ public class Level extends Observable implements Serializable {
 
         }
 
-        for (int i = 4; i < 12; i++) {
-            bricks.add(new Brick(Brick.WIDTH * (PADDING + i), 336));
-            bricks.add(new Brick((COLUMNS - PADDING - i - 1) * Brick.WIDTH, 336));
-        }
-
-        for (int i = 4; i < 12; i++) {
-            bricks.add(new Brick(Brick.WIDTH * (PADDING + i), 240));
-            bricks.add(new Brick((COLUMNS - PADDING - i - 1) * Brick.WIDTH, 240));
-        }
-
-        for (int i = 4; i < 12; i++) {
-            bricks.add(new Brick(Brick.WIDTH * (PADDING + i), 144));
-            bricks.add(new Brick((COLUMNS - PADDING - i - 1) * Brick.WIDTH, 144));
-        }
-
         //System.out.println(bricks.size());
 
         System.out.println(enemies.size());
         enemies.add(new Pulpul((COLUMNS - PADDING - 6) * Brick.WIDTH, 200));
         enemies.add(new ZenChan((COLUMNS - PADDING - 5) * Brick.WIDTH, 200));
-        String fileName = String.valueOf(Path.of(MAP_FOLDER, "1"));
+        String fileName = String.valueOf(Path.of(LEVEL_FOLDER, "1"));
 
 
         FileManager.serialize(this, fileName);
 
 
         spawnEntity(new Character(Player.getInstance().getMainCharacter()));
+
     }
 
     public void resetLevel(int health, int level) {
-
+        // Reset arrays
         this.killedEnemies = new ArrayList<>();
         this.enemies = new ArrayList<>();
         this.consumables = new ArrayList<>();
         this.bubbles = new ArrayList<>();
         this.loots = new ArrayList<>();
         this.powerUps = new ArrayList<>();
-
-
+        
         this.level = level;
-        String fileName = MAP_FOLDER + File.separator + this.level;
+
+        //--------------------
+        
+        if(!FileManager.checkExists(String.valueOf(Path.of(LEVEL_FOLDER, String.valueOf(this.level))))) {
+            new GenerateLevel(this).regenerateLevel(this.level);
+        }
+
+        // Load level based on parameter level
+        String fileName = LEVEL_FOLDER + File.separator + this.level;
         Level level1 = FileManager.deserialize(fileName);
-        this.bricks = level1.bricks;
+
+        // Init
         this.mainCharacter = level1.mainCharacter;
-        System.out.println(level1.getMainCharacter().isRedShoe());
+        this.bricks = level1.bricks;
+
         this.bricksImage = level1.bricksImage;
         this.enemies = level1.enemies;
         this.consumables = level1.consumables;
 
-        System.out.println(level1.enemies.size());
-
+        // Spawn character
         spawnEntity(new Character(Player.getInstance().getMainCharacter()));
         this.getMainCharacter().setHealth(health);
 
-
+        // Notify
         setChanged();
         notifyObservers(this);
     }
@@ -153,6 +154,10 @@ public class Level extends Observable implements Serializable {
 
     public ArrayList<Brick> getBricks() {
         return bricks;
+    }
+
+    public void addBrick(Brick brick) {
+        this.bricks.add(brick);
     }
 
     public void setBricks(ArrayList<Brick> bricks) {
@@ -270,7 +275,5 @@ public class Level extends Observable implements Serializable {
             return imagesMovements;
         }
     }
-
-
 }
 

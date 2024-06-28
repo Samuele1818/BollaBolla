@@ -43,15 +43,22 @@ public class GameController implements KeyListener {
     
     
     //powerUp Counter
-    private int counterYellowCandy;
-    private int counterPurpleCandy;
+    private int counterBluCandy;
+    private int counterPinkCandy;
     private int counterRedShoe;
+    private int counterYellowCandy;
+
+
 
     public void resetCounterYellowCandy(){
         counterYellowCandy=1;
     }
-    public void resetCounterPurpleCandy(){
-        counterPurpleCandy=35;
+
+    public void resetCounterBluCandy(){
+        counterBluCandy=1;
+    }
+    public void resetCounterPinkCandy(){
+        counterPinkCandy=35;
     }
 
     public void resetCounterRedShoe(){
@@ -75,9 +82,10 @@ public class GameController implements KeyListener {
         removePowerUp = new ArrayList<>();
         addPowerUp = new ArrayList<>();
 
-        counterYellowCandy=3;
-        counterPurpleCandy=35;
+        counterBluCandy=3;
+        counterPinkCandy=35;
         counterRedShoe=1000;
+        counterYellowCandy=1;
         
     }
 
@@ -136,10 +144,15 @@ public class GameController implements KeyListener {
 
     private void delayBubble() {
         delay = true;
+        int app;
+        if(model.getLevel().getMainCharacter().isYellowCandy())
+            app=300;
+        else
+            app=400;
         Thread a = new Thread(() -> {
 
             try {
-                Thread.sleep(350);
+                Thread.sleep(app);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -159,29 +172,34 @@ public class GameController implements KeyListener {
         a.start();
     }
 
+
+    private void mainCharacterDead(){
+        isJumping = false;
+        model.getLevel().getMainCharacter().resetHumpHeight();
+
+        switch(model.getLevel().getMainCharacter().getCurrentDirection()){
+            case LEFT:model.getLevel().getMainCharacter().changeCharacterPath(Level.Direction.DEAD_LEFT);break;
+            case RIGHT:model.getLevel().getMainCharacter().changeCharacterPath(Level.Direction.DEAD_RIGHT);
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        model.getLevel().getEnemies().clear();
+        model.getLevel().getBubbles().clear();
+        model.getLevel().resetLevel(model.getLevel().getMainCharacter().getHealth() - 1, model.getLevel().getLevel());
+        NormalBubble.setFireDelaySetting(32);
+    }
+
     private void mainCharacterMove() {
 
 
         //------------------------------------//
         //hit character control
         if (hitEnemies(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY())) {
-            isJumping = false;
-            model.getLevel().getMainCharacter().resetHumpHeight();
-
-            switch(model.getLevel().getMainCharacter().getCurrentDirection()){
-                case LEFT:model.getLevel().getMainCharacter().changeCharacterPath(Level.Direction.DEAD_LEFT);break;
-                case RIGHT:model.getLevel().getMainCharacter().changeCharacterPath(Level.Direction.DEAD_RIGHT);
-            }
-
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            model.getLevel().getEnemies().clear();
-            model.getLevel().getBubbles().clear();
-            model.getLevel().resetLevel(model.getLevel().getMainCharacter().getHealth() - 1, model.getLevel().getLevel());
-
+            mainCharacterDead();
         }
 
         //------------------------------------//
@@ -300,6 +318,7 @@ public class GameController implements KeyListener {
             if (bubble.getFireDelay() <= 0) {
                 Level.Direction direction =model.getLevel().getMainCharacter().getCurrentDirection();
                 Level.Direction directionMonster;
+                counterBluCandy--;
                 switch (bubble.getCurrentDirection()){
                     case LEFT: directionMonster = Level.Direction.DEAD_LEFT;break;
                     case RIGHT: directionMonster = Level.Direction.DEAD_RIGHT;break;
@@ -446,7 +465,7 @@ public class GameController implements KeyListener {
     private void moveNormalBubble(NormalBubble bubble) {
         int move;
         if (bubble.getFireDelay() > 0) {
-            if(model.getLevel().getMainCharacter().isYellowCandy())
+            if(model.getLevel().getMainCharacter().isBluCandy())
                 move=4;
             else
                 move=3;
@@ -568,6 +587,7 @@ public class GameController implements KeyListener {
                         }
                 );
     }
+
     private void hitLoots(){
         for(Loot loot:addLoot)
             model.getLevel().getLoots().add(loot);
@@ -602,6 +622,18 @@ public class GameController implements KeyListener {
             resetCounterRedShoe();
             addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.RED_SHOE));
         }
+        if(counterBluCandy == 0){
+            int randomX = random.nextInt((maxX - minX) + 1) + minX;
+            int randomY = random.nextInt((maxY - minY) + 1) + minY;
+            resetCounterBluCandy();
+            addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.BLUE_CANDY));
+        }
+        if(counterPinkCandy == 0){
+            int randomX = random.nextInt((maxX - minX) + 1) + minX;
+            int randomY = random.nextInt((maxY - minY) + 1) + minY;
+            resetCounterPinkCandy();
+            addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.PINK_CANDY));
+        }
         if(counterYellowCandy == 0){
             int randomX = random.nextInt((maxX - minX) + 1) + minX;
             int randomY = random.nextInt((maxY - minY) + 1) + minY;
@@ -609,9 +641,6 @@ public class GameController implements KeyListener {
             addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.YELLOW_CANDY));
         }
     }
-
-
-
 
     private void hitPowerUp(){
         if(isHitPowerUp(model.getLevel().getMainCharacter().getX(),model.getLevel().getMainCharacter().getY())){
@@ -626,6 +655,14 @@ public class GameController implements KeyListener {
                         redShoePower();
 
                 }
+                case BLUE_CANDY -> {
+                    if(!model.getLevel().getMainCharacter().isBluCandy())
+                        bluCandyPower();
+                }
+                case PINK_CANDY -> {
+                    if(!model.getLevel().getMainCharacter().isPinkCandy())
+                        pinkCandyPower();
+                }
                 case YELLOW_CANDY -> {
                     if(!model.getLevel().getMainCharacter().isYellowCandy())
                         yellowCandyPower();
@@ -635,14 +672,27 @@ public class GameController implements KeyListener {
     }
 
 
+
     private void yellowCandyPower(){
         model.getLevel().getMainCharacter().setYellowCandy(true);
     }
 
-    private void redShoePower(){
+    private void pinkCandyPower(){
+        model.getLevel().getMainCharacter().setPinkCandy(true);
+        NormalBubble.setFireDelaySetting(64);
+    }
+
+    private void bluCandyPower(){
         model.getLevel().getMainCharacter().setBluCandy(true);
+    }
+
+    private void redShoePower(){
+        model.getLevel().getMainCharacter().setRedShoe(true);
         model.getLevel().getMainCharacter().setSpeed(model.getLevel().getMainCharacter().getSpeed()*2);
     }
+
+
+
     private boolean isHitPowerUp(int x,int y){
         return model.getLevel().getPowerUps().stream()
                 .anyMatch(powerUp -> {
@@ -657,8 +707,6 @@ public class GameController implements KeyListener {
                 );
     }
 
-
-
     private PowerUp powerUpHit(int x,int y){
         return model.getLevel().getPowerUps().parallelStream()
                 .filter(powerUp -> {
@@ -672,7 +720,6 @@ public class GameController implements KeyListener {
                         }
                 ).findFirst().orElse(null);
     }
-
 
     public boolean powerUpFall(PowerUp powerUp){
         boolean isFall = false;
@@ -1168,8 +1215,10 @@ public class GameController implements KeyListener {
                 if (!isFire) {
                     isFire = true;
                     Bubble bubble =model.getLevel().getMainCharacter().fire();
-                    if (!(bubble.getFireDelay() != 0 && !isValidPositionBrickBubble(bubble)))
+                    if (!(bubble.getFireDelay() != 0 && !isValidPositionBrickBubble(bubble))) {
                         addBubble.add(bubble);
+                        counterPinkCandy--;
+                    }
 
                 }
             }

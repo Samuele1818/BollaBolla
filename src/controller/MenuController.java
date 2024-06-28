@@ -42,7 +42,7 @@ public class MenuController implements ActionListener {
         }
 
         if (e.getActionCommand().equals("PLAY")) {
-            model.getLevel().resetLevel(model.getLevel().getMainCharacter().getHealth(), 1);
+            model.getLevel().resetLevel(model.getLevel().getMainCharacter().getHealth(), 2);
             view.changePanel(View.Screen.PLAY);
             model.getLevel().getMainCharacter().changeCharacterType(model.getPlayer().getMainCharacter());
 
