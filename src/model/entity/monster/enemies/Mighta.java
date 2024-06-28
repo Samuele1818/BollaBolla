@@ -3,7 +3,7 @@ package model.entity.monster.enemies;
 import model.Level;
 import model.sam.Fly;
 
-public class Mighta extends Enemies implements Fly {
+public class Mighta extends Enemie implements Fly {
 
 
     public Mighta(int x, int y) {

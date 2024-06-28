@@ -2,7 +2,7 @@ package model.entity.monster.enemies;
 
 import model.Level;
 
-public class Invader extends Enemies {
+public class Invader extends Enemie {
 
     boolean fear;
     private int fearSpace = 16;

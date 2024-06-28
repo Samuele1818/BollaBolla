@@ -2,7 +2,7 @@ package model.entity.monster.enemies;
 
 import model.Level;
 
-public class Drunk extends Enemies {
+public class Drunk extends Enemie {
 
 
     public Drunk(int x, int y) {

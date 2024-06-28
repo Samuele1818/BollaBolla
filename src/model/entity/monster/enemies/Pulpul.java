@@ -4,7 +4,7 @@ import model.Level;
 import model.entity.Monster;
 import model.sam.Jump;
 
-public class Pulpul extends Enemies implements Jump {
+public class Pulpul extends Enemie implements Jump {
 
 
     public boolean isJump;

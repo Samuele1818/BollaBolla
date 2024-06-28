@@ -1,6 +1,7 @@
 package model.utils;
 
 import model.Level;
+import model.entity.monster.enemies.ZenChan;
 import model.entity.objects.Brick;
 import model.files.FileManager;
 
@@ -60,15 +61,13 @@ public class GenerateLevel {
     }
 
     private void drawTwo() {
-        int h_first = 4 * Brick.HEIGHT;
-
-        level.addBrick(new Brick(Brick.WIDTH, h_first));
-        level.addBrick(new Brick((COLUMNS - 1) * Brick.WIDTH, h_first));
-
-        for (int i = 0; i < 2; i++) {
-
+        level.getEnemies().add(new ZenChan((COLUMNS - PADDING - 5) * Brick.WIDTH, 200));
+        for (int i = 6; i < 23; i++) {
+            level.addBrick(new Brick(15 * Brick.WIDTH, i * Brick.HEIGHT));
+            level.addBrick(new Brick(27 * Brick.WIDTH, i * Brick.HEIGHT));
         }
     }
+
 
     private void drawThree() {
         // Implement the brick pattern for level 3

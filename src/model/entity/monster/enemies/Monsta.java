@@ -3,7 +3,7 @@ package model.entity.monster.enemies;
 
 import model.Level;
 
-public class Monsta extends Enemies {
+public class Monsta extends Enemie {
     public Monsta(int x, int y) {
         super(x, y, Type.MONSTA);
 

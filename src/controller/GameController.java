@@ -211,7 +211,7 @@ public class GameController implements KeyListener {
 
         //------------------------------------//
         //possibility of jumping
-        if (possibilityOfJumping && isJumping && model.getLevel().getMainCharacter().getJumpHeight() > 0) {
+        if (isJumping && model.getLevel().getMainCharacter().getJumpHeight() > 0) {
 
                 model.getLevel().getMainCharacter().jump();
                 model.getLevel().getMainCharacter().setJumpHeight(model.getLevel().getMainCharacter().getJumpHeight() - 1);
@@ -230,7 +230,7 @@ public class GameController implements KeyListener {
 
         //------------------------------------//
         //fall control
-        if (!isJumping || !possibilityOfJumping) {
+        if (!isJumping || possibilityOfJumping) {
             possibilityOfJumping = !fallMainCharacter(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY());
 
         }
@@ -302,11 +302,35 @@ public class GameController implements KeyListener {
     private boolean fallMainCharacter(int x, int y) {
         boolean isFall;
         isFall = model.getLevel().getBricks().stream().
-                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 16 < brick.getX() + 32)));
+                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)));
 
-
-        if (isFall)
+        if(y<48){
             model.getLevel().getMainCharacter().fall();
+            return true;
+        }
+
+
+        if (isFall) {
+            model.getLevel().getMainCharacter().fall();
+            return isFall;
+        }
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                      brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+                );
+        if (isFall) {
+            model.getLevel().getMainCharacter().fall();
+            return isFall;
+        }
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+        );
+        if (isFall) {
+            model.getLevel().getMainCharacter().fall();
+            return isFall;
+        }
+
+
+
 
         return isFall;
     }
@@ -325,7 +349,6 @@ public class GameController implements KeyListener {
                     default: directionMonster = Level.Direction.DEAD_LEFT;break;
 
                 }
-                System.out.println(directionMonster);
 
 
 
@@ -644,11 +667,11 @@ public class GameController implements KeyListener {
 
     private void hitPowerUp(){
         if(isHitPowerUp(model.getLevel().getMainCharacter().getX(),model.getLevel().getMainCharacter().getY())){
-            System.out.println("si");
+
             PowerUp powerUp = powerUpHit(model.getLevel().getMainCharacter().getX(),model.getLevel().getMainCharacter().getY());
             removePowerUp.add(powerUp);
             model.getLevel().setScore(model.getLevel().getScore()+powerUp.getScore());
-            System.out.println(powerUp.getScore());
+
             switch(powerUp.getPowerUpType()){
                 case RED_SHOE -> {
                     if(!model.getLevel().getMainCharacter().isRedShoe())
@@ -781,11 +804,11 @@ public class GameController implements KeyListener {
 
         CopyOnWriteArrayList<Monster> monsters = new CopyOnWriteArrayList(model.getLevel().getKilledEnemies());
         for (Monster monster : monsters) {
-            monster = (Enemies) monster;
+            monster = (Enemie) monster;
             int newX = 0;
             int newY = 0;
-            if (((Enemies) monster).getDeadSize() > 0) {
-                ((Enemies) monster).decreaseDeadSize();
+            if (((Enemie) monster).getDeadSize() > 0) {
+                ((Enemie) monster).decreaseDeadSize();
 
                 switch (monster.getCurrentDirection()) {
                     case LEFT:
@@ -1117,15 +1140,38 @@ public class GameController implements KeyListener {
         }
     }
 
-    //-------------------------
+    //TODO:rifare
 
     private boolean enemiesFall(Monster monster) {
-        boolean isFall = false;
         int x = monster.getX();
         int y = monster.getY();
+        System.out.println("si");
+        boolean isFall;
         isFall = model.getLevel().getBricks().stream().
-                filter(brick -> brick.getY() >= y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16) || (x + 32 >= brick.getX() && x + 32 < brick.getX() + 16))).
-                anyMatch(brick -> brick.getY() == y + Character.HEIGHT || brick.getY()+1 == y + Character.HEIGHT);
+                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)));
+
+        if(y<48)
+            return false;
+
+
+
+        if (isFall)
+            return !isFall;
+
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+        );
+        if (isFall)
+            return !isFall;
+
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+        );
+        if (isFall)
+            return !isFall;
+
+
+
 
 
         return !isFall;
@@ -1221,7 +1267,9 @@ public class GameController implements KeyListener {
                     }
 
                 }
+
             }
+
         }
     }
 
@@ -1263,6 +1311,8 @@ public class GameController implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
+
+
     }
     //--------------------------------------------------------------------------------------------//
 

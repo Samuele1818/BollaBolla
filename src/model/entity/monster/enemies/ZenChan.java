@@ -3,7 +3,7 @@ package model.entity.monster.enemies;
 
 import model.Level;
 
-public class ZenChan extends Enemies {
+public class ZenChan extends Enemie {
     public ZenChan(int x, int y) {
         super(x, y, Type.ZENCHAN);
 

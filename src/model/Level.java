@@ -2,7 +2,7 @@ package model;
 
 import model.entity.Monster;
 import model.entity.monster.Character;
-import model.entity.monster.enemies.Enemies;
+import model.entity.monster.enemies.Enemie;
 import model.entity.monster.enemies.Pulpul;
 import model.entity.monster.enemies.ZenChan;
 import model.entity.objects.Brick;
@@ -93,7 +93,6 @@ public class Level extends Observable implements Serializable {
 
         //System.out.println(bricks.size());
 
-        System.out.println(enemies.size());
         enemies.add(new Pulpul((COLUMNS - PADDING - 6) * Brick.WIDTH, 200));
         enemies.add(new ZenChan((COLUMNS - PADDING - 5) * Brick.WIDTH, 200));
         String fileName = String.valueOf(Path.of(LEVEL_FOLDER, "1"));
@@ -218,7 +217,7 @@ public class Level extends Observable implements Serializable {
 
     public void spawnEntity(Entity entity) {
         switch (entity.getClass().getSimpleName()) {
-            case "Enemies" -> enemies.add((Enemies) entity);
+            case "Enemies" -> enemies.add((Enemie) entity);
             case "Consumable" -> consumables.add((Consumable) entity);
             case "Character" -> mainCharacter = (Character) entity;
             case "NormalBubble" -> bubbles.add((Bubble) entity);
