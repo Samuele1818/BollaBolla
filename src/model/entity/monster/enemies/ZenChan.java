@@ -8,9 +8,8 @@ public class ZenChan extends Enemies {
         super(x, y, Type.ZENCHAN);
 
     }
-
-    public ZenChan(int x, int y, String path, Level.Direction direction) {
-        super(x, y, Type.ZENCHAN, 1, path, direction);
+    public ZenChan(int x, int y,String path, Level.Direction direction) {
+        super(x, y, Type.ZENCHAN,1,path,direction);
 
     }
 

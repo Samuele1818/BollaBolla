@@ -70,7 +70,8 @@ public class LeaderboardPanel extends JPanel implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof ArrayList<?> arrayList) {
+        if (arg instanceof ArrayList<?>) {
+            ArrayList<?> arrayList = (ArrayList<?>) arg;
             if (arrayList.isEmpty()) {
                 setLeaderboard(new ArrayList<>());
                 return;

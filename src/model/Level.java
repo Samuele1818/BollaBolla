@@ -28,8 +28,6 @@ public class Level extends Observable implements Serializable {
     @Serial
     private final static long serialVersionUID = 6920834105100098501L;
     private static final String MAP_FOLDER = "level";
-    transient ArrayList<Loot> loots;
-    transient ArrayList<PowerUp> powerUps;
     private Character mainCharacter;
     // Bricks contained by the map
     private ArrayList<Brick> bricks;
@@ -44,6 +42,8 @@ public class Level extends Observable implements Serializable {
     // Level number to load the map
     private int level;
     private int score;
+    transient ArrayList<Loot> loots;
+    transient ArrayList<PowerUp> powerUps;
 
     public Level(String bricksImage, Character.Type mainCharacter) {
         bricks = new ArrayList<>();
@@ -115,12 +115,20 @@ public class Level extends Observable implements Serializable {
 
     public void resetLevel(int health, int level) {
 
+        this.killedEnemies = new ArrayList<>();
+        this.enemies = new ArrayList<>();
+        this.consumables = new ArrayList<>();
+        this.bubbles = new ArrayList<>();
+        this.loots = new ArrayList<>();
+        this.powerUps = new ArrayList<>();
+
+
         this.level = level;
         String fileName = MAP_FOLDER + File.separator + this.level;
         Level level1 = FileManager.deserialize(fileName);
         this.bricks = level1.bricks;
         this.mainCharacter = level1.mainCharacter;
-
+        System.out.println(level1.getMainCharacter().isRedShoe());
         this.bricksImage = level1.bricksImage;
         this.enemies = level1.enemies;
         this.consumables = level1.consumables;
@@ -250,7 +258,7 @@ public class Level extends Observable implements Serializable {
         ZENCHAN_BUBBLE("zenchan.gif"), INVADER_BUBBLE("invader.gif"),
         MONSTA_BUBBLE("monsta.gif"), PULPUL_BUBBLE("pulpul.gif"),
         DRUNK_BUBBLE("drunk.gif"), MIGHTA_BUBBLE("bobbub.gif"),
-        BUBBLE("bubble.png"), BUBBLE_END("bubbleend.png"),
+        BUBBLE("bubble.png"),BUBBLE_END("bubbleend.png"),
         DEAD_LEFT("dead_left.gif"), DEAD_RIGHT("dead_right.gif");
         private final String imagesMovements;
 

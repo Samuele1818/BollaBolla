@@ -19,18 +19,13 @@ public class PauseController implements ActionListener, KeyListener {
         view = View.getInstance();
     }
 
-    public static PausePanel getInstance() {
-        if (instance == null) instance = new PausePanel();
-        return instance;
-    }
-
     public void setActionListener() {
         view.getPausePanel().resumeButtonPanel().getResumeButton().addActionListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("Resume")) restartGameLoop();
+        if(e.getActionCommand().equals("Resume")) restartGameLoop();
         else quitGame();
     }
 
@@ -58,5 +53,10 @@ public class PauseController implements ActionListener, KeyListener {
     public void restartGameLoop() {
         view.changePanel(View.Screen.PLAY);
         // TODO: Resume game loo
+    }
+
+    public static PausePanel getInstance() {
+        if(instance == null) instance = new PausePanel();
+        return instance;
     }
 }

@@ -1,5 +1,5 @@
 package model.sam;
 
 public interface Fall {
-    void fall();
+    public void fall();
 }

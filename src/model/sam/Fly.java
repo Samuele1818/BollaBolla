@@ -1,5 +1,5 @@
 package model.sam;
 
 public interface Fly {
-    void fly(int x, int y);
+    public void fly(int x, int y);
 }

@@ -8,9 +8,9 @@ public abstract class Bubble extends Consumable implements Move {
     public final static int BUBBLE_SIZE = 24;
     private int fireDelay;
     private boolean isEnemies;
-
+    private static int score=10;
     public Bubble(int x, int y, int width, int height, int fireDelay) {
-        super(x, y, width, height, Type.NORMAL_BUBBLE, Level.Direction.BUBBLE.getImagesMovements());
+        super(x, y, width, height, Type.NORMAL_BUBBLE, Level.Direction.BUBBLE.getImagesMovements(),score,0);
         this.fireDelay = fireDelay;
         isEnemies = false;
     }

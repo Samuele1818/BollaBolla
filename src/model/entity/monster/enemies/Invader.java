@@ -11,9 +11,8 @@ public class Invader extends Enemies {
         super(x, y, Type.INVADER);
         fear = false;
     }
-
     public Invader(int x, int y, String path, Level.Direction direction) {
-        super(x, y, Type.INVADER, 1, path, direction);
+        super(x, y, Type.INVADER,1,path,direction);
         fear = false;
     }
 

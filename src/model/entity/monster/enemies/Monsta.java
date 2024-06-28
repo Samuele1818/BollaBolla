@@ -8,9 +8,8 @@ public class Monsta extends Enemies {
         super(x, y, Type.MONSTA);
 
     }
-
-    public Monsta(int x, int y, String path, Level.Direction direction) {
-        super(x, y, Type.MONSTA, 1, path, direction);
+    public Monsta(int x, int y,String path, Level.Direction direction) {
+        super(x, y, Type.MONSTA,1,path,direction);
 
     }
 }

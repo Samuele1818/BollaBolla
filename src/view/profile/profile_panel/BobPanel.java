@@ -8,7 +8,7 @@ import java.awt.*;
 
 public class BobPanel extends JPanel {
     public static final String BOB_GIF_PATH = "./resources/static_image/bob.gif";
-    private final Button bobButton;
+    private Button bobButton;
 
     public BobPanel() {
         setBackground(Color.BLACK);

@@ -103,7 +103,8 @@ public class View extends JFrame implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        if (arg instanceof Player p) {
+        if (arg instanceof Player) {
+            Player p = (Player) arg;
 
             ProfileCenterPanel profileCenter = getProfilePanel().getProfileCenterPanel();
             profileCenter.getAvatarPanel().setUserImage(p.getAvatar());

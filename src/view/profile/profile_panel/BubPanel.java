@@ -9,7 +9,7 @@ import java.awt.*;
 public class BubPanel extends JPanel {
     public static final String BUB_GIF_PATH = "./resources/static_image/bub.gif";
 
-    private final Button bubButton;
+    private Button bubButton;
 
     public BubPanel() {
         setBackground(Color.BLACK);

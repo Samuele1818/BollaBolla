@@ -2,36 +2,25 @@ package model.entity.objects.consumable;
 
 public class Loot extends Consumable {
 
-    private int score;
+    public enum NameLoot{
+        APPLE("apple.png",100),
+        BANANA("bananas.png",200),
+        CHERRIES("cherries.png",300),
+        GRAPE("grape.png",400),
+        ICE_CREAM_CUP("ice_cream_cup.png",500),
+        LEMON("lemon.png",600),
+        ORANGE("orange.png",700),
+        PEACH("peach.png",800),
+        PEAR("pear.png",900);
 
 
-    public Loot(int x, int y, NameLoot name) {
-        super(x, y, WIDTH, HEIGHT, Type.LOOT, name.getName());
-        score = name.getScore();
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public enum NameLoot {
-        APPLE("apple.png", 100),
-        BANANA("bananas.png", 200),
-        CHERRIES("cherries.png", 300),
-        GRAPE("grape.png", 400),
-        ICE_CREAM_CUP("ice_cream_cup.png", 500),
-        LEMON("lemon.png", 600),
-        ORANGE("orange.png", 700),
-        PEACH("peach.png", 800),
-        PEAR("pear.png", 900);
 
 
-        private final String name;
-        private final int score;
-
-        NameLoot(String name, int score) {
-            this.name = name;
-            this.score = score;
+        private String name;
+        private int score;
+        NameLoot(String name,int score){
+            this.name=name;
+            this.score=score;
         }
 
         public String getName() {
@@ -41,5 +30,19 @@ public class Loot extends Consumable {
         public int getScore() {
             return score;
         }
+    }
+
+
+
+    public static final int WIDTH=32;
+    public static final int HEIGHT=32;
+    private int score;
+    public Loot(int x,int y,NameLoot name){
+        super(x,y,WIDTH,HEIGHT,Type.LOOT, name.getName(), name.getScore(),0);
+        score= name.getScore();
+    }
+
+    public int getScore() {
+        return score;
     }
 }

@@ -6,13 +6,13 @@ import model.sam.Fall;
 import model.sam.Fly;
 import model.sam.Move;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 public abstract class Monster extends Entity implements Move, Fall, Serializable, Fly {
-    public static final int WIDTH = 32, HEIGHT = 32;
-    @Serial
     private static final long serialVersionUID = 3977631827356837393L;
+    public static final int WIDTH = 32, HEIGHT = 32;
+
+
     private int speed;
 
 
@@ -22,9 +22,8 @@ public abstract class Monster extends Entity implements Move, Fall, Serializable
         this.speed = speed;
 
     }
-
     public Monster(int x, int y, int speed, Type type, String skinPath, Level.Direction direction) {
-        super(x, y, WIDTH, HEIGHT, type, skinPath, direction);
+        super(x, y, WIDTH, HEIGHT, type, skinPath,direction);
 
         this.speed = speed;
 
@@ -42,7 +41,7 @@ public abstract class Monster extends Entity implements Move, Fall, Serializable
 
     @Override
     public void fall() {
-        this.setY(getY() + 2);
+        this.setY(getY() + 1);
     }
 
 
@@ -52,10 +51,11 @@ public abstract class Monster extends Entity implements Move, Fall, Serializable
     }
 
     @Override
-    public void fly(int x, int y) {
-        setX(getX() + x);
-        setY(getY() + y);
+    public void fly(int x,int y){
+        setX(getX()+x);
+        setY(getY()+y);
     }
+
 
 
 }

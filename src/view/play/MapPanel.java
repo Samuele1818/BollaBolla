@@ -57,23 +57,23 @@ public class MapPanel extends JPanel implements Observer {
     }
 
     private void drawPowerUp(Graphics g) {
-        CopyOnWriteArrayList<PowerUp> powerUps = new CopyOnWriteArrayList<>(level.getPowerUps());
-        for (PowerUp powerUp : powerUps) {
+        CopyOnWriteArrayList<PowerUp> powerUps= new CopyOnWriteArrayList<>(level.getPowerUps());
+        for(PowerUp powerUp : powerUps) {
             java.awt.Image image = new ImageIcon(powerUp.getImagesFolder() + File.separator + powerUp.getCharacterPath()).getImage();
-            g.drawImage(image, powerUp.getX(), powerUp.getY(), Monster.WIDTH, Monster.HEIGHT, this);
+            g.drawImage(image, powerUp.getX(), powerUp.getY(), PowerUp.WIDTH, PowerUp.HEIGHT, this);
         }
     }
 
     private void drawLoot(Graphics g) {
-        CopyOnWriteArrayList<Loot> loots = new CopyOnWriteArrayList<>(level.getLoots());
-        for (Loot loot : loots) {
+        CopyOnWriteArrayList<Loot> loots= new CopyOnWriteArrayList<>(level.getLoots());
+        for(Loot loot : loots) {
             java.awt.Image image = new ImageIcon(loot.getImagesFolder() + File.separator + loot.getCharacterPath()).getImage();
-            g.drawImage(image, loot.getX(), loot.getY(), Monster.WIDTH, Monster.HEIGHT, this);
+            g.drawImage(image, loot.getX(), loot.getY(), Loot.WIDTH, Loot.HEIGHT, this);
         }
     }
 
     private void drawKilledEnemies(Graphics g) {
-        CopyOnWriteArrayList<Monster> monsters = new CopyOnWriteArrayList<>(level.getKilledEnemies());
+        CopyOnWriteArrayList<Monster> monsters =new CopyOnWriteArrayList(level.getKilledEnemies());
 
         for (Monster monster : monsters) {
             java.awt.Image image = new ImageIcon(monster.getImagesFolder() + File.separator + monster.getCharacterPath()).getImage();
@@ -83,19 +83,19 @@ public class MapPanel extends JPanel implements Observer {
     }
 
     private void drawNumber(Graphics g) {
-        int l = level.getMainCharacter().getHealth();
+        Integer l = level.getMainCharacter().getHealth();
         java.awt.Image image = new ImageIcon("./resources" + File.separator + "static_image" + File.separator + "number" + File.separator + l + ".png").getImage();
 
         g.drawImage(image, 96, (level.ROWS * 16) - 25, 16, 16, this);
 
 
-        int score = level.getScore();
-        StringBuilder s = new StringBuilder(Integer.toString(score));
+        Integer score = level.getScore();
+        String s = score.toString();
         while (s.length() < 9) {
-            s.insert(0, "-");
+            s = "-" + s;
         }
         while (s.length() > 9) {
-            s = new StringBuilder(s.substring(0, s.length() - 1));
+            s = s.substring(0, s.length() - 1);
         }
 
         for (int i = 0; i < s.length(); i++) {
@@ -105,7 +105,7 @@ public class MapPanel extends JPanel implements Observer {
     }
 
     private void drawEnemies(Graphics g) {
-        CopyOnWriteArrayList<Monster> enemies = new CopyOnWriteArrayList<>(level.getEnemies());
+        CopyOnWriteArrayList<Monster> enemies =new CopyOnWriteArrayList(level.getEnemies());
         for (Monster monster : enemies) {
             java.awt.Image image = new ImageIcon(
                     monster.getImagesFolder()
@@ -155,7 +155,7 @@ public class MapPanel extends JPanel implements Observer {
         };
 
 
-        CopyOnWriteArrayList<Bubble> bubbles = new CopyOnWriteArrayList<>(level.getBubbles());
+        CopyOnWriteArrayList<Bubble> bubbles =new CopyOnWriteArrayList(level.getBubbles());
 
         for (Bubble bubble : bubbles) {
             java.awt.Image bubbleImage = new ImageIcon(folder + File.separator + bubble.getCharacterPath()).getImage();
@@ -166,7 +166,8 @@ public class MapPanel extends JPanel implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        this.level = (Level) arg;
+        Level newLevel = (Level) arg;
+        this.level = newLevel;
 
         invalidate();
         revalidate();
