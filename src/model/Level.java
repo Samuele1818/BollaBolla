@@ -46,8 +46,6 @@ public class Level extends Observable implements Serializable {
     transient ArrayList<Loot> loots;
     transient ArrayList<PowerUp> powerUps;
 
-    transient private GenerateLevel generateLevel;
-
     public Level(String bricksImage, Character.Type mainCharacter) {
         bricks = new ArrayList<>();
         this.bricksImage = bricksImage;
@@ -61,51 +59,14 @@ public class Level extends Observable implements Serializable {
         powerUps = new ArrayList<>();
         this.score = 0;
 
-        generateLevel = new GenerateLevel(this);
-
-        init();
-//        resetLevel(3, 1);
-    }
-
-    public void init() {
-
-        this.killedEnemies = new ArrayList<>();
-        this.enemies = new ArrayList<>();
-        this.consumables = new ArrayList<>();
-        this.bubbles = new ArrayList<>();
-        this.loots = new ArrayList<>();
-        this.powerUps = new ArrayList<>();
-        FileManager.createDirectory(LEVEL_FOLDER);
-
-        for (int j = PADDING; j < COLUMNS - PADDING; j++) {
-
-            if (j * Brick.WIDTH <= 13 * Brick.HEIGHT || j * Brick.WIDTH > 17 * Brick.HEIGHT)
-                bricks.add(new Brick(j * Brick.WIDTH, Brick.HEIGHT * PADDING));
-            bricks.add(new Brick(j * Brick.WIDTH, (ROWS - PADDING - 1) * Brick.HEIGHT));
-
-        }
-
-        for (int i = PADDING; i < ROWS - PADDING; i++) {
-            bricks.add(new Brick(Brick.WIDTH * PADDING, i * Brick.HEIGHT));
-            bricks.add(new Brick((COLUMNS - PADDING - 1) * Brick.WIDTH, i * Brick.HEIGHT));
-
-        }
-
-        //System.out.println(bricks.size());
-
-        enemies.add(new Pulpul((COLUMNS - PADDING - 6) * Brick.WIDTH, 200));
-        enemies.add(new ZenChan((COLUMNS - PADDING - 5) * Brick.WIDTH, 200));
-        String fileName = String.valueOf(Path.of(LEVEL_FOLDER, "1"));
-
-
-        FileManager.serialize(this, fileName);
-
-
-        spawnEntity(new Character(Player.getInstance().getMainCharacter()));
 
     }
 
     public void resetLevel(int health, int level) {
+        // TODO: 16 = variabile statica
+        this.level = level;
+        if(level > 16) return;
+
         // Reset arrays
         this.killedEnemies = new ArrayList<>();
         this.enemies = new ArrayList<>();
@@ -113,23 +74,24 @@ public class Level extends Observable implements Serializable {
         this.bubbles = new ArrayList<>();
         this.loots = new ArrayList<>();
         this.powerUps = new ArrayList<>();
-        
-        this.level = level;
+        this.bricks = new ArrayList<>();
+
+        FileManager.createDirectory(LEVEL_FOLDER);
 
         //--------------------
-        
+
         if(!FileManager.checkExists(String.valueOf(Path.of(LEVEL_FOLDER, String.valueOf(this.level))))) {
             new GenerateLevel(this).regenerateLevel(this.level);
         }
 
         // Load level based on parameter level
         String fileName = LEVEL_FOLDER + File.separator + this.level;
+        System.out.println(fileName);
         Level level1 = FileManager.deserialize(fileName);
 
         // Init
         this.mainCharacter = level1.mainCharacter;
         this.bricks = level1.bricks;
-
         this.bricksImage = level1.bricksImage;
         this.enemies = level1.enemies;
         this.consumables = level1.consumables;

@@ -14,10 +14,10 @@ public class Game implements Serializable {
     private Character.Type character;
     private boolean hasWin;
     private int score, lastLevel;
-    private Date date;
+    private String date;
 
 
-    public Game(Character.Type character, boolean hasWin, int score, int lastLevel, Date date) {
+    public Game(Character.Type character, boolean hasWin, int score, int lastLevel, String date) {
         this.character = character;
         this.hasWin = hasWin;
         this.score = score;
@@ -57,11 +57,11 @@ public class Game implements Serializable {
         this.lastLevel = lastLevel;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(String date) {
         this.date = date;
     }
 }

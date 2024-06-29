@@ -119,7 +119,8 @@ public class MapPanel extends JPanel implements Observer {
 
     private void drawGrid(Graphics g) {
         String imagePath = level.getBricksImage();
-        for (Brick brick : level.getBricks()) {
+        CopyOnWriteArrayList<Brick> bricks =new CopyOnWriteArrayList(level.getBricks());
+        for (Brick brick : bricks) {
             java.awt.Image image = new ImageIcon(imagePath).getImage();
             g.drawImage(
                     image,

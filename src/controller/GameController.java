@@ -10,12 +10,13 @@ import model.entity.objects.bubble.Bubble;
 import model.entity.objects.bubble.NormalBubble;
 import model.entity.objects.consumable.Loot;
 import model.entity.objects.consumable.PowerUp;
+import model.play.Game;
 import view.View;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
-import java.util.Random;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,6 @@ public class GameController implements KeyListener {
     private View view;
     private int currentSpeed;
     private boolean isJumping;
-    private boolean possibilityOfJumping;
     private boolean isFire;
     private boolean delay;
     private ArrayList<Bubble> addBubble;
@@ -39,36 +39,55 @@ public class GameController implements KeyListener {
     private ArrayList<Loot> addLoot;
     private ArrayList<PowerUp> removePowerUp;
     private ArrayList<PowerUp> addPowerUp;
-    
-    
+    private boolean endLevel=false;
+    private boolean dead;
     
     //powerUp Counter
-    private int counterBluCandy;
-    private int counterPinkCandy;
-    private int counterRedShoe;
-    private int counterYellowCandy;
+
+    private HashMap<PowerUp.PowerUpType,Integer> powerUpCounter;
 
 
+    private void resetPowerUp() {
+        Set<Map.Entry<PowerUp.PowerUpType, Integer>> powerUps = powerUpCounter.entrySet();
+        for (Map.Entry<PowerUp.PowerUpType, Integer> powerUpType : powerUps) {
+            switch (powerUpType.getKey()) {
 
-    public void resetCounterYellowCandy(){
-        counterYellowCandy=1;
+                case PowerUp.PowerUpType.BLUE_CANDY,PowerUp.PowerUpType.PINK_CANDY,PowerUp.PowerUpType.YELLOW_CANDY -> {
+                    if (powerUpType.getValue() == 0) {
+                        spawnPowerUps(powerUpType.getKey());
+                        powerUpCounter.put(powerUpType.getKey(), 6);
+                    }
+                }
+
+                    case PowerUp.PowerUpType.RED_SHOE -> {
+                        if (powerUpType.getValue() == 0) {
+                            spawnPowerUps(powerUpType.getKey());
+                            powerUpCounter.put(powerUpType.getKey(), 1000);
+                        }
+                    }
+                case PowerUp.PowerUpType.PINK_RING,PowerUp.PowerUpType.RED_RING,PowerUp.PowerUpType.BLUE_RING-> {
+                    if (powerUpType.getValue() == 0) {
+                        spawnPowerUps(powerUpType.getKey());
+                        powerUpCounter.put(powerUpType.getKey(), 3 );
+                    }
+                }
+
+            }
+        }
     }
 
-    public void resetCounterBluCandy(){
-        counterBluCandy=1;
-    }
-    public void resetCounterPinkCandy(){
-        counterPinkCandy=35;
+    private void spawnPowerUps(PowerUp.PowerUpType powerUpType){
+        Random random = new Random();
+        int minX = 64;
+        int maxX = 432;
+        int randomX = random.nextInt((maxX - minX) + 1) + minX;
+        addPowerUp.add(new PowerUp(randomX,48, powerUpType));
     }
 
-    public void resetCounterRedShoe(){
-        counterRedShoe=1000;
-    }
+
     private GameController() {
 
         currentSpeed = 0;
-        isJumping = false;
-        possibilityOfJumping = true;
         isFire = false;
         delay = false;
         addBubble = new ArrayList<>();
@@ -81,11 +100,15 @@ public class GameController implements KeyListener {
         addLoot = new ArrayList<>();
         removePowerUp = new ArrayList<>();
         addPowerUp = new ArrayList<>();
-
-        counterBluCandy=3;
-        counterPinkCandy=35;
-        counterRedShoe=1000;
-        counterYellowCandy=1;
+        dead=false;
+        powerUpCounter=new HashMap<>();
+        powerUpCounter.put(PowerUp.PowerUpType.BLUE_CANDY,3);
+        powerUpCounter.put(PowerUp.PowerUpType.PINK_CANDY,3);
+        powerUpCounter.put(PowerUp.PowerUpType.RED_SHOE,1000);
+        powerUpCounter.put(PowerUp.PowerUpType.YELLOW_CANDY,3);
+        powerUpCounter.put(PowerUp.PowerUpType.PINK_RING,3);
+        powerUpCounter.put(PowerUp.PowerUpType.RED_RING,3);
+        powerUpCounter.put(PowerUp.PowerUpType.BLUE_RING,3);
         
     }
 
@@ -102,33 +125,48 @@ public class GameController implements KeyListener {
 
         view.getMapPanel().addKeyListener(this);
     }
+    private void reset(){
+        currentSpeed = 0;
+        isFire = false;
+        delay = false;
+        addBubble = new ArrayList<>();
+        removeBubble = new ArrayList<>();
+        removeMonster = new ArrayList<>();
+        addMonster = new ArrayList<>();
+        addKilledMonster = new ArrayList<>();
+        removeKilledMonster = new ArrayList<>();
+        removeLoot = new ArrayList<>();
+        addLoot = new ArrayList<>();
+        removePowerUp = new ArrayList<>();
+        addPowerUp = new ArrayList<>();
+        dead=false;
+    }
 
     public void GameLoop() {
+        while (model.getLevel().getMainCharacter().getHealth() != 0 && model.getLevel().getLevel() <= 16) {
 
-
-        while (model.getLevel().getMainCharacter().getHealth() != 0 || model.getLevel().getLevel() > 16) {
+            if(dead) continue;
             fireAnimation();
-            mainCharacterMove();
+
             EnemiesKill();
-
+            mainCharacterMove();
             killedEnemiesMove();
+            bubbleMove();
             enemiesMove();
-
             hitLoots();
-
-            spawnPowerUp();
+            resetPowerUp();
             powerUpMove();
             hitPowerUp();
             collisionEnemies();
-            bubbleMove();
+
+
 
 
             model.getLevel().notifica();
 
             if (!delay && isFire)
                 delayBubble();
-
-
+            endLevel();
             try {
                 Thread.sleep(FRAME_RATE);
             } catch (InterruptedException e) {
@@ -139,13 +177,25 @@ public class GameController implements KeyListener {
         if (model.getLevel().getMainCharacter().getHealth() == 0) {
             model.getLevel().getMainCharacter().setHealth(Character.HEALTH);
             view.changePanel(View.Screen.LOSE);
+            reset();
+            model.getPlayer().insertGame(
+                    new Game(model.getPlayer().getMainCharacter(), false, model.getLevel().getScore(), model.getLevel().getLevel(), new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()))
+            );
+        }
+
+        if(model.getLevel().getLevel() > 16) {
+            view.changePanel(View.Screen.WIN);
+            reset();
+            model.getPlayer().insertGame(
+                    new Game(model.getPlayer().getMainCharacter(), true, model.getLevel().getScore(), model.getLevel().getLevel(), new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime()))
+            );
         }
     }
 
     private void delayBubble() {
         delay = true;
         int app;
-        if(model.getLevel().getMainCharacter().isYellowCandy())
+        if(model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.YELLOW_CANDY))
             app=300;
         else
             app=400;
@@ -172,7 +222,6 @@ public class GameController implements KeyListener {
         a.start();
     }
 
-
     private void mainCharacterDead(){
         isJumping = false;
         model.getLevel().getMainCharacter().resetHumpHeight();
@@ -183,7 +232,7 @@ public class GameController implements KeyListener {
         }
 
         try {
-            Thread.sleep(2000);
+            Thread.sleep(2200);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -191,30 +240,40 @@ public class GameController implements KeyListener {
         model.getLevel().getBubbles().clear();
         model.getLevel().resetLevel(model.getLevel().getMainCharacter().getHealth() - 1, model.getLevel().getLevel());
         NormalBubble.setFireDelaySetting(32);
+        currentSpeed = 0;
+
     }
 
     private void mainCharacterMove() {
-
-
         //------------------------------------//
         //hit character control
         if (hitEnemies(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY())) {
-            mainCharacterDead();
+                dead=true;
+                mainCharacterDead();
+                dead=false;
+
         }
 
         //------------------------------------//
         //movement either to the right or to the left
         if (currentSpeed != 0 && isValidPositionBrickMainCharacter(model.getLevel().getMainCharacter().getCurrentDirection(), model.getLevel().getMainCharacter().getX() + currentSpeed, model.getLevel().getMainCharacter().getY())) {
             model.getLevel().getMainCharacter().move(currentSpeed);
-            counterRedShoe--;
+            powerUpCounter.put(PowerUp.PowerUpType.RED_SHOE,powerUpCounter.get(PowerUp.PowerUpType.RED_SHOE)-1);
+
         }
 
         //------------------------------------//
         //possibility of jumping
-        if (isJumping && model.getLevel().getMainCharacter().getJumpHeight() > 0) {
+        if (model.getLevel().getMainCharacter().isJump() && model.getLevel().getMainCharacter().getJumpHeight() > 0) {
 
                 model.getLevel().getMainCharacter().jump();
                 model.getLevel().getMainCharacter().setJumpHeight(model.getLevel().getMainCharacter().getJumpHeight() - 1);
+
+        }
+        if (model.getLevel().getMainCharacter().isJump() && model.getLevel().getMainCharacter().getJumpHeight() > 0) {
+
+            model.getLevel().getMainCharacter().jump();
+            model.getLevel().getMainCharacter().setJumpHeight(model.getLevel().getMainCharacter().getJumpHeight() - 1);
 
         }
 
@@ -222,7 +281,7 @@ public class GameController implements KeyListener {
         //end-of-jump control
         if (model.getLevel().getMainCharacter().getJumpHeight() == 0) {
             if (fallMainCharacter(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY())) {
-                isJumping = false;
+                model.getLevel().getMainCharacter().setJump(false);
                 model.getLevel().getMainCharacter().resetHumpHeight();
 
             }
@@ -230,10 +289,15 @@ public class GameController implements KeyListener {
 
         //------------------------------------//
         //fall control
-        if (!isJumping || possibilityOfJumping) {
-            possibilityOfJumping = !fallMainCharacter(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY());
+        if (!model.getLevel().getMainCharacter().isJump() || model.getLevel().getMainCharacter().isPossibilityOfJumping()) {
+            model.getLevel().getMainCharacter().setPossibilityOfJumping(!fallMainCharacter(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY()));
 
         }
+        if (!model.getLevel().getMainCharacter().isJump() || model.getLevel().getMainCharacter().isPossibilityOfJumping()) {
+            model.getLevel().getMainCharacter().setPossibilityOfJumping(!fallMainCharacter(model.getLevel().getMainCharacter().getX(), model.getLevel().getMainCharacter().getY()));
+
+        }
+
 
     }
 
@@ -301,28 +365,31 @@ public class GameController implements KeyListener {
 
     private boolean fallMainCharacter(int x, int y) {
         boolean isFall;
-        isFall = model.getLevel().getBricks().stream().
-                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)));
 
         if(y<48){
             model.getLevel().getMainCharacter().fall();
             return true;
         }
 
+        isFall = model.getLevel().getBricks().stream().
+                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16)));
+
+
+
 
         if (isFall) {
             model.getLevel().getMainCharacter().fall();
             return isFall;
         }
         isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
-                      brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+                      brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
                 );
         if (isFall) {
             model.getLevel().getMainCharacter().fall();
             return isFall;
         }
         isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
-                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
         );
         if (isFall) {
             model.getLevel().getMainCharacter().fall();
@@ -342,7 +409,7 @@ public class GameController implements KeyListener {
             if (bubble.getFireDelay() <= 0) {
                 Level.Direction direction =model.getLevel().getMainCharacter().getCurrentDirection();
                 Level.Direction directionMonster;
-                counterBluCandy--;
+                powerUpCounter.put(PowerUp.PowerUpType.BLUE_CANDY,powerUpCounter.get(PowerUp.PowerUpType.BLUE_CANDY)-1);
                 switch (bubble.getCurrentDirection()){
                     case LEFT: directionMonster = Level.Direction.DEAD_LEFT;break;
                     case RIGHT: directionMonster = Level.Direction.DEAD_RIGHT;break;
@@ -488,7 +555,7 @@ public class GameController implements KeyListener {
     private void moveNormalBubble(NormalBubble bubble) {
         int move;
         if (bubble.getFireDelay() > 0) {
-            if(model.getLevel().getMainCharacter().isBluCandy())
+            if(model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.BLUE_CANDY))//blucandy
                 move=4;
             else
                 move=3;
@@ -512,21 +579,23 @@ public class GameController implements KeyListener {
 
         }
 
-        // FIXME: If inutile
         if (bubble.getFireDelay() <= 0) {
 
-            if (model.getLevel().getBricks().stream().noneMatch(brick -> brick.getY() + Brick.HEIGHT == bubble.getY() - 1 &&
+            if (model.getLevel().getBricks().stream().noneMatch(brick -> brick.getY() + Brick.HEIGHT == bubble.getY() &&
                     ((brick.getX() < bubble.getX() && brick.getX() + Brick.WIDTH >= bubble.getX()) ||
-                            (brick.getX() < bubble.getX() + bubble.getWidth() && brick.getX() + Brick.WIDTH >= bubble.getX() + bubble.getWidth()))
+                            (brick.getX() < bubble.getX() + 16 && brick.getX() + Brick.WIDTH >= bubble.getX() + 16) ||
+                            (brick.getX() < bubble.getX() + bubble.getWidth() && brick.getX() + Brick.WIDTH >= bubble.getX() + bubble.getWidth())
+                    )
+
             )) {
                 bubble.fly(0, -1);
-                
             } else
                 switch (bubble.getCurrentDirection()) {
                     case LEFT:
-                        if (model.getLevel().getBricks().stream().anyMatch(
-                                brick -> bubble.getY() > brick.getY() && bubble.getY() < brick.getY() + Brick.HEIGHT && bubble.getX() - 1 >= brick.getX() + brick.getWidth()
-                        ))
+                        if (model.getLevel().getBricks().
+                                stream().filter(brick -> brick.getX() <= bubble.getX()  && ((brick.getY() + 16 > bubble.getY()  && brick.getY() <= bubble.getY() ) ||(brick.getY() + 16 > bubble.getY()+16  && brick.getY() <= bubble.getY()+16 ) )).
+                                allMatch(brick -> brick.getX() + Brick.WIDTH < bubble.getX() )
+                        )
                             bubble.move(-1);
                         
                         else
@@ -534,9 +603,9 @@ public class GameController implements KeyListener {
                         break;
                         
                     case RIGHT:
-                        if (model.getLevel().getBricks().stream().anyMatch(
-                                brick -> bubble.getY() >= brick.getY() && bubble.getY() < brick.getY() + Brick.HEIGHT && bubble.getX() + bubble.getWidth() + 1 <= brick.getX()
-                        ))
+                        if (model.getLevel().getBricks().
+                            stream().filter(brick -> brick.getX() >= bubble.getX()  && ((brick.getY() + 16 > bubble.getY() && brick.getY() <= bubble.getY())||(brick.getY() + 16 > bubble.getY()+16  && brick.getY() <= bubble.getY()+16 ))).
+                            allMatch(brick -> brick.getX() > bubble.getX() + bubble.getWidth()))
                             bubble.move(1);
                         else
                             bubble.setCurrentDirection(Level.Direction.LEFT);
@@ -632,38 +701,7 @@ public class GameController implements KeyListener {
     //powerUP
 
     
-    public void spawnPowerUp(){
-        Random random = new Random();
-        int minX = 64;
-        int maxX = 432;
 
-        int minY = 48;
-        int maxY = 384;
-        if(counterRedShoe == 0) {
-            int randomX = random.nextInt((maxX - minX) + 1) + minX;
-            int randomY = random.nextInt((maxY - minY) + 1) + minY;
-            resetCounterRedShoe();
-            addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.RED_SHOE));
-        }
-        if(counterBluCandy == 0){
-            int randomX = random.nextInt((maxX - minX) + 1) + minX;
-            int randomY = random.nextInt((maxY - minY) + 1) + minY;
-            resetCounterBluCandy();
-            addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.BLUE_CANDY));
-        }
-        if(counterPinkCandy == 0){
-            int randomX = random.nextInt((maxX - minX) + 1) + minX;
-            int randomY = random.nextInt((maxY - minY) + 1) + minY;
-            resetCounterPinkCandy();
-            addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.PINK_CANDY));
-        }
-        if(counterYellowCandy == 0){
-            int randomX = random.nextInt((maxX - minX) + 1) + minX;
-            int randomY = random.nextInt((maxY - minY) + 1) + minY;
-            resetCounterYellowCandy();
-            addPowerUp.add(new PowerUp(randomX,randomY, PowerUp.PowerUpType.YELLOW_CANDY));
-        }
-    }
 
     private void hitPowerUp(){
         if(isHitPowerUp(model.getLevel().getMainCharacter().getX(),model.getLevel().getMainCharacter().getY())){
@@ -674,45 +712,48 @@ public class GameController implements KeyListener {
 
             switch(powerUp.getPowerUpType()){
                 case RED_SHOE -> {
-                    if(!model.getLevel().getMainCharacter().isRedShoe())
-                        redShoePower();
-
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.RED_SHOE)){
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.RED_SHOE,true);
+                        model.getLevel().getMainCharacter().setSpeed(model.getLevel().getMainCharacter().getSpeed()*2);
+                    }
                 }
                 case BLUE_CANDY -> {
-                    if(!model.getLevel().getMainCharacter().isBluCandy())
-                        bluCandyPower();
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.BLUE_CANDY)) {
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.BLUE_CANDY, true);
+                        powerUpCounter.put(PowerUp.PowerUpType.BLUE_RING, powerUpCounter.get(PowerUp.PowerUpType.BLUE_RING) - 1);
+                    }
                 }
                 case PINK_CANDY -> {
-                    if(!model.getLevel().getMainCharacter().isPinkCandy())
-                        pinkCandyPower();
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.PINK_CANDY)) {
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.PINK_CANDY, true);
+                        NormalBubble.setFireDelaySetting(64);
+                        powerUpCounter.put(PowerUp.PowerUpType.PINK_RING,powerUpCounter.get(PowerUp.PowerUpType.PINK_RING) - 1);
+
+                    }
                 }
                 case YELLOW_CANDY -> {
-                    if(!model.getLevel().getMainCharacter().isYellowCandy())
-                        yellowCandyPower();
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.YELLOW_CANDY))
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.YELLOW_CANDY,true);
+                    powerUpCounter.put(PowerUp.PowerUpType.RED_RING,powerUpCounter.get(PowerUp.PowerUpType.RED_RING) - 1);
                 }
+                case PINK_RING ->{
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.PINK_RING))
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.PINK_RING,true);
+                }
+                case RED_RING ->{
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.RED_RING))
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.RED_RING,true);
+                }
+                case BLUE_RING ->{
+                    if(!model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.BLUE_RING))
+                        model.getLevel().getMainCharacter().getPowerUps().put(PowerUp.PowerUpType.BLUE_RING,true);
+                }
+
             }
         }
     }
 
 
-
-    private void yellowCandyPower(){
-        model.getLevel().getMainCharacter().setYellowCandy(true);
-    }
-
-    private void pinkCandyPower(){
-        model.getLevel().getMainCharacter().setPinkCandy(true);
-        NormalBubble.setFireDelaySetting(64);
-    }
-
-    private void bluCandyPower(){
-        model.getLevel().getMainCharacter().setBluCandy(true);
-    }
-
-    private void redShoePower(){
-        model.getLevel().getMainCharacter().setRedShoe(true);
-        model.getLevel().getMainCharacter().setSpeed(model.getLevel().getMainCharacter().getSpeed()*2);
-    }
 
 
 
@@ -744,7 +785,7 @@ public class GameController implements KeyListener {
                 ).findFirst().orElse(null);
     }
 
-    public boolean powerUpFall(PowerUp powerUp){
+    private boolean powerUpFall(PowerUp powerUp){
         boolean isFall = false;
         int x = powerUp.getX();
         int y = powerUp.getY();
@@ -756,7 +797,7 @@ public class GameController implements KeyListener {
         return !isFall;
     }
 
-    public void powerUpMove(){
+    private void powerUpMove(){
 
         for(PowerUp powerUp:addPowerUp)
             model.getLevel().getPowerUps().add(powerUp);
@@ -777,6 +818,27 @@ public class GameController implements KeyListener {
     }
 
 
+//------------------------------------
+// endLevel
+    private void endLevel() {
+        boolean valid = model.getLevel().getBubbles().stream().allMatch(bubble -> !bubble.isEnemies());
+
+        if (!dead && !endLevel && model.getLevel().getEnemies().isEmpty() && model.getLevel().getKilledEnemies().isEmpty() && valid) {
+            endLevel = true;
+            Thread a = new Thread(() -> {
+                try {
+                    Thread.sleep(100);
+
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                reset();
+                model.getLevel().resetLevel(model.getLevel().getMainCharacter().getHealth(), model.getLevel().getLevel()+1);
+                endLevel=false;
+            });
+            a.start();
+        }
+    }
 
 
 
@@ -784,9 +846,8 @@ public class GameController implements KeyListener {
 
 
 
-    
-    
-    
+
+
 
 
 
@@ -830,9 +891,8 @@ public class GameController implements KeyListener {
                 }
                 monster.fly(newX, newY);
             } else {
-                if (enemiesFall(monster))
-                    monster.fall();
-                else {
+
+                if (!itemFall(monster) || !itemFall(monster) || !itemFall(monster)){
                     removeKilledMonster.add(monster);
                     switch ((int) (Math.random() * 10)) {
                         case 1:
@@ -873,6 +933,47 @@ public class GameController implements KeyListener {
         }
     }
 
+    private boolean itemFall(Monster monster){
+        boolean isFall;
+        int x=monster.getX();
+        int y=monster.getY();
+
+
+        if(y<48){
+            monster.fall();
+            return true;
+        }
+
+        isFall = model.getLevel().getBricks().stream().
+                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16)));
+
+
+
+
+        if (isFall) {
+            monster.fall();
+            return isFall;
+        }
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
+        );
+        if (isFall) {
+            monster.fall();
+            return isFall;
+        }
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
+        );
+        if (isFall) {
+            monster.fall();
+            return isFall;
+        }
+
+
+
+
+        return isFall;
+    }
 
     //-------------------------------------------------------------------------------//
     //Enemies
@@ -891,20 +992,16 @@ public class GameController implements KeyListener {
         for (Monster monster : model.getLevel().getEnemies()) {
             switch (monster.getClass().getSimpleName()) {
                 case "ZenChan":
-                    if (enemiesFall(monster)) {
-                        monster.fall();
-                        break;
-                    }
+                    enemiesFall(monster);
+                    if (enemiesFall(monster)) break;
                     zenChanMove((ZenChan) monster);
                     break;
                 case "Invader":
-                    if (enemiesFall(monster)) {
-                        monster.fall();
-                        break;
-                    }
+                    if (enemiesFall(monster)) break;
                     InvaderMove((Invader) monster);
                     break;
                 case "Monsta":
+                    if (enemiesFall(monster)) break;
                     monstaMove((Monsta) monster);
                     break;
                 case "Mighta":
@@ -914,52 +1011,30 @@ public class GameController implements KeyListener {
                     pulpulMove((Pulpul) monster);
                     break;
                 case "Drunk":
-                    if (enemiesFall(monster)) {
-                        monster.fall();
-                        break;
-                    }
-                    drunkMove((Drunk) monster);
+                    if (enemiesFall(monster)) break;
+                        drunkMove((Drunk) monster);
                     break;
             }
         }
     }
 
     private void monstaMove(Monsta monsta) {
-        int newX;
-        boolean valid = enemiesFall(monsta);
-        if (valid) monsta.fall();
-        if (!valid) {
-            if (model.getLevel().getBricks().parallelStream().
-                    filter(brick -> brick.getY() >= monsta.getY() && ((monsta.getX() >= brick.getX() && monsta.getX() < brick.getX() + 16) || (monsta.getX() + 31 >= brick.getX() && monsta.getX() + 31 < brick.getX() + 16))).
-                    allMatch(brick -> brick.getY() > monsta.getY() + Monster.HEIGHT))
-                monsta.fall();
-            else {
-
-                switch (monsta.getCurrentDirection()) {
-                    case LEFT:
-                        newX = monsta.getX() - monsta.getSpeed();
-                        if (model.getLevel().getBricks().
-                                stream().filter(brick -> brick.getX() <= monsta.getX() && ((brick.getY() == monsta.getY()) || (brick.getY() == monsta.getY() + 16)))
-                                .allMatch(brick -> brick.getX() + 16 <= newX))
-                            monsta.move(-monsta.getSpeed());
-                        else {
-                            monsta.setCurrentDirection(Level.Direction.RIGHT);
-                            monsta.changeCharacterPath(Level.Direction.RIGHT);
-                        }
-                        break;
-                    case RIGHT:
-                        newX = monsta.getX() + monsta.getSpeed();
-                        if (model.getLevel().getBricks().
-                                stream().filter(brick -> brick.getX() >= monsta.getX() && ((brick.getY() == monsta.getY()) || (brick.getY() == monsta.getY() + 16)))
-                                .allMatch(brick -> brick.getX() >= newX + 32))
-                            monsta.move(monsta.getSpeed());
-                        else {
-                            monsta.setCurrentDirection(Level.Direction.LEFT);
-                            monsta.changeCharacterPath(Level.Direction.LEFT);
-                        }
-                        break;
+        switch(monsta.getCurrentDirection()){
+            case LEFT -> {
+                if(model.getLevel().getBricks().stream().noneMatch(brick-> (brick.getY() == monsta.getY() || brick.getY() == monsta.getY()+16) &&  monsta.getX() == brick.getX()+brick.getWidth()))
+                    monsta.move(-monsta.getSpeed());
+                else {
+                    monsta.setCurrentDirection(Level.Direction.RIGHT);
+                    monsta.changeCharacterPath(Level.Direction.RIGHT);
                 }
-
+            }
+            case RIGHT -> {
+                if(model.getLevel().getBricks().stream().filter(brick->brick.getX()>= monsta.getX()).noneMatch(brick-> (brick.getY() == monsta.getY() || brick.getY() == monsta.getY()+16) && monsta.getX()+monsta.getWidth() == brick.getX()))
+                    monsta.move(monsta.getSpeed());
+                else {
+                    monsta.setCurrentDirection(Level.Direction.LEFT);
+                    monsta.changeCharacterPath(Level.Direction.LEFT);
+                }
             }
         }
     }
@@ -1042,70 +1117,88 @@ public class GameController implements KeyListener {
     }
 
     private void pulpulMove(Pulpul pulpul) {
+        pulpul.setSpeed(1);
+       if(model.getLevel().getMainCharacter().getY() == pulpul.getY()) {
+           if(model.getLevel().getMainCharacter().getX() >= pulpul.getX())
+               pulpul.setCurrentDirection(Level.Direction.RIGHT);
+           else
+               pulpul.setCurrentDirection(Level.Direction.LEFT);
+           pulpul.setSpeed(2);
+       }
 
-        if (pulpul.isJump()) {
-            pulpulMoveHeightEquals(pulpul);
-            pulpulMoveHeightUp(pulpul);
-            return;
-        }
-
-        boolean valid = enemiesFall(pulpul);
-
-        if (valid) {
-            pulpul.fall();
-            return;
-        }
-
-        pulpul.setPossibilityOfJumping(true);
-
-        if (model.getLevel().getMainCharacter().getY() == pulpul.getY())
-            pulpulMoveHeightEquals(pulpul);
-        if (model.getLevel().getMainCharacter().getY() > pulpul.getY())
-
-            pulpulMoveHeightDown(pulpul);
-        if (pulpul.isPossibilityOfJumping() && model.getLevel().getMainCharacter().getY() < pulpul.getY())
-            pulpulMoveHeightUp(pulpul);
-
-
-    }
+       if(!pulpulFall(pulpul) && model.getLevel().getMainCharacter().getY()+32 < pulpul.getY())pulpul.setJump(true);
+       if(!pulpul.isJump) enemiesFall(pulpul);
+       if(pulpul.isJump()){
+           if(model.getLevel().getMainCharacter().getX() >= pulpul.getX())
+               pulpul.setCurrentDirection(Level.Direction.RIGHT);
+           else
+               pulpul.setCurrentDirection(Level.Direction.LEFT);
+           pulpul.jump();
+           pulpul.decreaseSizeJump();
+       }
+       if(pulpul.getSizeJump() == 0){
+           pulpul.setJump(false);
+           pulpul.resetJump();
+       }
 
 
+       movePulpul(pulpul);return;
 
-    //TODO: pulpul è da rifare
-    private void pulpulMoveHeightUp(Pulpul pulpul) {
-        pulpul.setPossibilityOfJumping(false);
-        pulpul.setJump(true);
-        pulpul.decreaseSizeJump();
-        if (pulpul.getSizeJump() == 0) {
-            pulpul.setJump(false);
-            pulpul.resetJump();
-        }
-        pulpul.jump();
 
     }
 
-    private void pulpulMoveHeightDown(Pulpul pulpul) {
-        int newX;
-        switch (pulpul.getCurrentDirection()) {
+    private boolean pulpulFall(Monster monster){
+        boolean isFall;
+        int x=monster.getX();
+        int y=monster.getY();
+
+
+        if(y<48)
+            return true;
+
+
+        isFall = model.getLevel().getBricks().stream().
+                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16)));
+
+
+
+
+        if (isFall)
+            return isFall;
+
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
+        );
+        if (isFall)
+            return isFall;
+
+        isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
+                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
+        );
+        if (isFall)
+            return isFall;
+
+
+
+
+
+        return isFall;
+    }
+
+
+    private void pulpulDirection(Pulpul pulpul){
+        switch(pulpul.getCurrentDirection()){
             case LEFT -> {
-                newX = pulpul.getX() - pulpul.getSpeed();
-                if (model.getLevel().getBricks().
-                        stream().filter(brick -> brick.getX() <= pulpul.getX() && ((brick.getY() == pulpul.getY()) || (brick.getY() == pulpul.getY() + 16)))
-                        .allMatch(brick -> brick.getX() + 16 <= newX))
-
+                if(model.getLevel().getBricks().stream().noneMatch(brick-> (brick.getY() == pulpul.getY() || brick.getY() == pulpul.getY()+16) &&  pulpul.getX() == brick.getX()+brick.getWidth()))
                     pulpul.move(-pulpul.getSpeed());
                 else {
                     pulpul.setCurrentDirection(Level.Direction.RIGHT);
                     pulpul.changeCharacterPath(Level.Direction.RIGHT);
                 }
             }
-
             case RIGHT -> {
-                newX = pulpul.getX() + pulpul.getSpeed();
-                if (model.getLevel().getBricks().
-                        stream().filter(brick -> brick.getX() >= pulpul.getX() && ((brick.getY() == pulpul.getY()) || (brick.getY() == pulpul.getY() + 16)))
-                        .allMatch(brick -> brick.getX() >= newX + 32))
 
+                if(model.getLevel().getBricks().stream().filter(brick->brick.getX()>= pulpul.getX()).noneMatch(brick-> (brick.getY() == pulpul.getY() || brick.getY() == pulpul.getY()+16) && pulpul.getX()+pulpul.getWidth() == brick.getX()))
                     pulpul.move(pulpul.getSpeed());
                 else {
                     pulpul.setCurrentDirection(Level.Direction.LEFT);
@@ -1115,79 +1208,79 @@ public class GameController implements KeyListener {
         }
     }
 
-    private void pulpulMoveHeightEquals(Pulpul pulpul) {
-        int newX;
-        pulpul.setSpeed(2);
-        if (model.getLevel().getMainCharacter().getX() <= pulpul.getX()) {
-            pulpul.setCurrentDirection(Level.Direction.LEFT);
-            pulpul.changeCharacterPath(Level.Direction.LEFT);
 
-            newX = pulpul.getX() - pulpul.getSpeed();
-            if (model.getLevel().getBricks().parallelStream().
-                    anyMatch(brick -> brick.getY() == pulpul.getY() + pulpul.getHeight() && ((newX + pulpul.getWidth() >= brick.getX() && newX + pulpul.getWidth() < brick.getX() + Brick.WIDTH) || newX >= brick.getX() && newX < brick.getX() + Brick.WIDTH))
-                    && isValidPositionBrick(pulpul.getCurrentDirection(), newX, pulpul.getY()))
+    private void movePulpul(Pulpul pulpul) {
+        if(pulpul.isJump()) {pulpulDirection(pulpul);return;}
 
-                pulpul.move(-pulpul.getSpeed());
-        } else {
-            pulpul.setJump(true);
-            pulpul.setCurrentDirection(Level.Direction.RIGHT);
-            pulpul.changeCharacterPath(Level.Direction.RIGHT);
-            newX = pulpul.getX() + pulpul.getSpeed();
-            if (model.getLevel().getBricks().stream().
-                    anyMatch(brick -> brick.getY() == pulpul.getY() + pulpul.getHeight() && ((newX >= brick.getX() && newX < brick.getX() + Brick.WIDTH) || (newX + pulpul.getWidth() >= brick.getX() && newX + pulpul.getWidth() < brick.getX() + Brick.WIDTH)))
-                    && isValidPositionBrick(pulpul.getCurrentDirection(), newX, pulpul.getY()))
-                pulpul.move(pulpul.getSpeed());
-        }
+        if(!enemiesFall(pulpul) || !enemiesFall(pulpul))pulpulDirection(pulpul);
+
     }
 
-    //TODO:rifare
+
+
+
 
     private boolean enemiesFall(Monster monster) {
-        int x = monster.getX();
-        int y = monster.getY();
-        System.out.println("si");
         boolean isFall;
+        int x=monster.getX();
+        int y=monster.getY();
+
+
+        if(y<48){
+            monster.fall();
+            return true;
+        }
+
         isFall = model.getLevel().getBricks().stream().
-                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)));
-
-        if(y<48)
-            return false;
+                noneMatch(brick -> brick.getY() == y+Character.HEIGHT && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16)));
 
 
 
-        if (isFall)
-            return !isFall;
 
+        if (isFall) {
+            monster.fall();
+            return isFall;
+        }
         isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
-                brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+                brick.getY() == y+16 && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
         );
-        if (isFall)
-            return !isFall;
-
+        if (isFall) {
+            monster.fall();
+            return isFall;
+        }
         isFall = model.getLevel().getBricks().stream().anyMatch(brick ->
-                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16))
+                brick.getY() == y && ((x >= brick.getX() && x < brick.getX() + 16) || (x + 16 >= brick.getX() && x + 16 < brick.getX() + 16)|| (x + 32 > brick.getX() && x + 32 < brick.getX() + 16))
         );
-        if (isFall)
-            return !isFall;
+        if (isFall) {
+            monster.fall();
+            return isFall;
+        }
 
 
 
 
-
-        return !isFall;
-
-
+        return isFall;
     }
 
-    private void drunkMove(Drunk drunk) {
+
+
+
+    private void  drunkMove(Drunk drunk){
+
+        for(int i=0;i<4;i++)
+            if(!enemiesFall(drunk))
+                drunkMoveSetting(drunk);
+    }
+
+    private void drunkMoveSetting(Drunk drunk) {
+        System.out.println(drunk.getCurrentDirection());
         switch (drunk.getCurrentDirection()) {
             case LEFT:
-                int newX = drunk.getX() - drunk.getSpeed();
                 if (model.getLevel().getBricks().parallelStream().
-                        anyMatch(brick -> brick.getY() == drunk.getY() + drunk.getHeight() && (newX >= brick.getX() && newX < brick.getX() + Brick.WIDTH))
-                        && isValidPositionBrick(drunk.getCurrentDirection(), newX, drunk.getY()))
+                        noneMatch(brick -> ( brick.getY() == drunk.getY() + drunk.getHeight() || brick.getY() == drunk.getY() + 16) && (drunk.getX() >= brick.getX() && drunk.getX() < brick.getX() + Brick.WIDTH))
+                        )
 
-                    drunk.move(-drunk.getSpeed());
+                    drunk.move(-1);
 
                 else {
                     drunk.setCurrentDirection(Level.Direction.RIGHT);
@@ -1197,11 +1290,11 @@ public class GameController implements KeyListener {
                 break;
 
             case RIGHT:
-                newX = drunk.getX() + drunk.getSpeed();
                 if (model.getLevel().getBricks().parallelStream().
-                        anyMatch(brick -> brick.getY() == drunk.getY() + drunk.getHeight() && (newX + drunk.getWidth() >= brick.getX() && newX + drunk.getWidth() < brick.getX() + Brick.WIDTH))
-                        && isValidPositionBrick(drunk.getCurrentDirection(), newX, drunk.getY()))
-                    drunk.move(drunk.getSpeed());
+                        noneMatch(brick -> (brick.getY() == drunk.getY()  + drunk.getHeight() || brick.getY() == drunk.getY() + 16)  && (drunk.getX() + drunk.getWidth() <= brick.getX() && drunk.getX() + drunk.getWidth() > brick.getX() + Brick.WIDTH))
+                        )
+                    drunk.move(1);
+
                 else {
                     drunk.setCurrentDirection(Level.Direction.LEFT);
                     drunk.changeCharacterPath(Level.Direction.LEFT);
@@ -1248,6 +1341,9 @@ public class GameController implements KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
         int keyCode = e.getKeyCode();
+
+        if(dead) return;
+
         switch (keyCode) {
             case KeyEvent.VK_A -> {
                 currentSpeed = 0;
@@ -1257,13 +1353,15 @@ public class GameController implements KeyListener {
                 currentSpeed = 0;
                 model.getLevel().getMainCharacter().setCurrentDirection(Level.Direction.RIGHT);
             }
+
             case KeyEvent.VK_ENTER -> {
                 if (!isFire) {
                     isFire = true;
                     Bubble bubble =model.getLevel().getMainCharacter().fire();
                     if (!(bubble.getFireDelay() != 0 && !isValidPositionBrickBubble(bubble))) {
                         addBubble.add(bubble);
-                        counterPinkCandy--;
+                        powerUpCounter.put(PowerUp.PowerUpType.PINK_CANDY,powerUpCounter.get(PowerUp.PowerUpType.PINK_CANDY)-1);
+
                     }
 
                 }
@@ -1277,10 +1375,12 @@ public class GameController implements KeyListener {
     public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
 
+        if(dead) return;
+
         switch (keyCode) {
             case KeyEvent.VK_A -> {
                 model.getLevel().getMainCharacter().setCurrentDirection(Level.Direction.LEFT);
-                if(model.getLevel().getMainCharacter().isRedShoe())
+                if(model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.RED_SHOE))
                     currentSpeed = -4;
                 else
                     currentSpeed = -2;
@@ -1288,17 +1388,19 @@ public class GameController implements KeyListener {
 
             case KeyEvent.VK_D -> {
                 model.getLevel().getMainCharacter().setCurrentDirection(Level.Direction.RIGHT);
-                if(model.getLevel().getMainCharacter().isRedShoe())
+                if(model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.RED_SHOE))
                     currentSpeed = 4;
                 else
                     currentSpeed = 2;
             }
 
             case KeyEvent.VK_SPACE -> {
-                if (possibilityOfJumping) {
-                    isJumping = true;
-                    possibilityOfJumping=false;
-                    counterYellowCandy--;
+                if (model.getLevel().getMainCharacter().isPossibilityOfJumping()) {
+                    model.getLevel().getMainCharacter().setJump(true);
+                    model.getLevel().getMainCharacter().setPossibilityOfJumping(false);
+                    powerUpCounter.put(PowerUp.PowerUpType.YELLOW_CANDY,powerUpCounter.get(PowerUp.PowerUpType.YELLOW_CANDY)-1);
+                    if(model.getLevel().getMainCharacter().getPowerUps().get(PowerUp.PowerUpType.PINK_RING))
+                        model.getLevel().setScore(model.getLevel().getScore()+100);
                 }
             }
 

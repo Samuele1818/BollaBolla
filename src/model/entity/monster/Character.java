@@ -5,10 +5,12 @@ import model.entity.Monster;
 import model.entity.objects.Brick;
 import model.entity.objects.bubble.Bubble;
 import model.entity.objects.bubble.NormalBubble;
+import model.entity.objects.consumable.PowerUp;
 import model.sam.Fire;
 import model.sam.Jump;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 public class Character extends Monster implements Jump,Fire,Serializable {
     public static final int SPAWN_X = Brick.WIDTH * 4, SPAWN_Y = Brick.HEIGHT * (Level.ROWS - 5), HEALTH = 3;
@@ -19,51 +21,54 @@ public class Character extends Monster implements Jump,Fire,Serializable {
     private Type type;
 
 
-    private boolean redShoe;
-    private boolean bluCandy;
-    private boolean pinkCandy;
-    private boolean yellowCandy;
+
+    private boolean isJump;
+    private boolean possibilityOfJumping;
+
+    private HashMap<PowerUp.PowerUpType, Boolean> powerUps;
     public Character(Type type) {
         this(SPAWN_X, SPAWN_Y, HEALTH, type);
         this.Health = HEALTH;
         this.jumpHeight = default_Jump;
-        redShoe=false;
-        bluCandy =false;
-        pinkCandy=false;
-        yellowCandy=false;
+        powerUps = new HashMap<PowerUp.PowerUpType, Boolean>();
+        powerUps.put(PowerUp.PowerUpType.RED_SHOE,false);
+        powerUps.put(PowerUp.PowerUpType.YELLOW_CANDY,false);
+        powerUps.put(PowerUp.PowerUpType.PINK_CANDY,false);
+        powerUps.put(PowerUp.PowerUpType.BLUE_CANDY,false);
+        powerUps.put(PowerUp.PowerUpType.PINK_RING,false);
+        powerUps.put(PowerUp.PowerUpType.BLUE_RING,false);
+        powerUps.put(PowerUp.PowerUpType.RED_RING,false);
+
+        isJump=false;
+        possibilityOfJumping=false;
     }
 
-    public boolean isYellowCandy() {
-        return yellowCandy;
+
+    public boolean isPossibilityOfJumping() {
+        return possibilityOfJumping;
     }
 
-    public void setYellowCandy(boolean yellowCandy) {
-        this.yellowCandy = yellowCandy;
+    public HashMap<PowerUp.PowerUpType, Boolean> getPowerUps() {
+        return powerUps;
     }
 
-    public boolean isPinkCandy() {
-        return pinkCandy;
+    public void setPowerUps(HashMap<PowerUp.PowerUpType, Boolean> powerUps) {
+        this.powerUps = powerUps;
     }
 
-    public void setPinkCandy(boolean pinkCandy) {
-        this.pinkCandy = pinkCandy;
+    public void setPossibilityOfJumping(boolean possibilityOfJumping) {
+        this.possibilityOfJumping = possibilityOfJumping;
     }
 
-    public boolean isBluCandy() {
-        return bluCandy;
+    public boolean isJump() {
+        return isJump;
     }
 
-    public void setBluCandy(boolean bluCandy) {
-        this.bluCandy = bluCandy;
+    public void setJump(boolean jump) {
+        isJump = jump;
     }
 
-    public boolean isRedShoe() {
-        return redShoe;
-    }
 
-    public void setRedShoe(boolean redShoe) {
-        this.redShoe = redShoe;
-    }
 
     private Character(int x, int y, int health, Type type) {
         super(x, y, 2, type, "walk_right.gif");

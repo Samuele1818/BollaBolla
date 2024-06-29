@@ -42,9 +42,6 @@ public class ProfileController implements ActionListener {
         setActionListener();
 
         view.getProfilePanel().getGameRecordsPanel().init(model.getPlayer().getRegister());
-
-        // TODO: Problema
-        model.getPlayer().getRegister().init();
     }
 
     private void setActionListener() {
@@ -102,8 +99,6 @@ public class ProfileController implements ActionListener {
             case "Load" -> {
 
                 String filePath = profileCenter.getUserPanel().getUserTextField().getText();
-                //test
-                model.getPlayer().getRegister().insertGame(new Game(Monster.Type.BUB, true, (int) (Math.random() * 10000), 3, new Date(2020, 11, 30)));
                 // Save current player data
                 model.getPlayer().save();
                 // Load new player and change it

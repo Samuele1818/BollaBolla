@@ -14,8 +14,5 @@ public class Drunk extends Enemie {
         super(x, y, Type.DRUNK, 4,path,direction);
     }
 
-    @Override
-    public void move(int x) {
 
-    }
 }

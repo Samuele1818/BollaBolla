@@ -101,6 +101,11 @@ public class Player extends Observable implements Serializable {
         return load("player0");
     }
 
+    public void insertGame(Game game) {
+        register.insertGame(game);
+        save();
+    }
+
     public String getName() {
         return name;
     }
